@@ -26,6 +26,7 @@ async function run() {
         await client.connect();
 
         const serviceColection = client.db("carDoctor").collection("services");
+        const bookingColection = client.db("carDoctor").collection("booking");
 
         app.get('/services', async (req, res) => {
             const cursor = serviceColection.find();
@@ -38,12 +39,50 @@ async function run() {
             const query = { _id: new ObjectId(id) };
 
             const options = {
-                projection: { title: 1, price: 1, service_id: 1 },
+                projection: { title: 1, price: 1, service_id: 1, img: 1 },
             };
             const result = await serviceColection.findOne(query, options);
             // const result = await cursor.toArray();
             res.send(result)
         })
+        // booking
+
+        app.get('/bookings', async (req, res) => {
+            console.log(req.query.email);
+            let query = {}
+            if (req.query?.email) {
+                query = { email: req.query.email }
+            }
+            const result = await bookingColection.find(query).toArray();
+            res.send(result)
+        })
+        app.post('/bookings', async (req, res) => {
+            const booking = req.body;
+            console.log(booking);
+            const result = await bookingColection.insertOne(booking);
+            res.send(result);
+        })
+        app.patch('/bookings/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const booking = req.body;   
+            console.log(booking);
+            const updateDoc = {
+                $set: {
+                  status: booking.status
+                },
+              };
+            const result = await bookingColection.updateOne(query, updateDoc);
+            res.send(result);
+        })
+        app.delete('/bookings/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await bookingColection.deleteOne(query);
+            res.send(result);
+        })
+
+
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
