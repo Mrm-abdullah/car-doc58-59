@@ -4,6 +4,8 @@ const app = express()
 require('dotenv').config()
 const port = process.env.PORT || 5000;
 
+var jwt = require('jsonwebtoken');
+
 
 // middleware
 app.use(cors())
@@ -27,7 +29,21 @@ async function run() {
 
         const serviceColection = client.db("carDoctor").collection("services");
         const bookingColection = client.db("carDoctor").collection("booking");
+        // auth related
+        app.post('/jwt', async (req, res) => {
+            const user = req.body;
+            console.log(user);
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+            res
+            .cookie('token', token,{
+                httpOnly:true,
+                secure:false
+            })
+            .send(token);
+        })
 
+
+        // service related
         app.get('/services', async (req, res) => {
             const cursor = serviceColection.find();
             const result = await cursor.toArray();
@@ -45,8 +61,8 @@ async function run() {
             // const result = await cursor.toArray();
             res.send(result)
         })
-        // booking
 
+        // booking
         app.get('/bookings', async (req, res) => {
             console.log(req.query.email);
             let query = {}
@@ -65,13 +81,13 @@ async function run() {
         app.patch('/bookings/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
-            const booking = req.body;   
+            const booking = req.body;
             console.log(booking);
             const updateDoc = {
                 $set: {
-                  status: booking.status
+                    status: booking.status
                 },
-              };
+            };
             const result = await bookingColection.updateOne(query, updateDoc);
             res.send(result);
         })
