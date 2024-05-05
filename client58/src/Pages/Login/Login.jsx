@@ -4,11 +4,11 @@ import { useContext } from 'react';
 import { AuthContext } from '../../Provider/AuthProviders';
 import axios from 'axios';
 const Login = () => {
-    const {signInEmail} = useContext(AuthContext)
+    const { signInEmail } = useContext(AuthContext)
     const location = useLocation()
     // console.log(location);
     const navigate = useNavigate();
-    const handleLogin = (e) =>{
+    const handleLogin = (e) => {
         e.preventDefault();
         const form = e.target;
         const email = form.email.value;
@@ -16,25 +16,28 @@ const Login = () => {
         console.log(email, password);
 
         signInEmail(email, password)
-        .then((result) => {
-            // Signed in 
-            const loggedInUser = result.user;
-            console.log(loggedInUser);
-            const user = {email}
-            axios.post('http://localhost:5000/jwt', user)
-              .then((res) => {
-                console.log(res);
-              })
-              .catch( (error) =>{
-                console.log(error);
-              });
-            // navigate(location?.state ? location?.state : '/')
-        })
-        .catch((error) => {
-            // const errorCode = error.code;
-            const errorMessage = error.message;
-            console.log(errorMessage);
-        });
+            .then((result) => {
+                // Signed in 
+                const loggedInUser = result.user;
+                console.log(loggedInUser);
+                const user = { email }
+                // get token access
+                axios.post('http://localhost:5000/jwt', user, { withCredentials: true })
+                    .then((res) => {
+                        console.log(res.data);
+                        if (res.data.success) {
+                            navigate(location?.state ? location?.state : '/')
+                        }
+                    })
+                    .catch((error) => {
+                        console.log(error);
+                    });
+            })
+            .catch((error) => {
+                // const errorCode = error.code;
+                const errorMessage = error.message;
+                console.log(errorMessage);
+            });
 
     }
     return (
